@@ -1,0 +1,8 @@
+{
+  "name": "SafeHTTP",
+  "version": "1.0.0",
+  "main": "ext.js",
+  "permissions": {
+    "http": true
+  }
+}
