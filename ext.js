@@ -1,7 +1,3 @@
-<script src="https://cdn.jsdelivr.net/gh/Nevari164/HttpExtGandi@main/ext.js"></script>
-
-
-
 (function (global) {
     const allowedDomains = ["api.example.com"];
 
@@ -65,4 +61,4 @@
     global.SafeHTTP = SafeHTTP;
 
 })(window);
-<script>
+
