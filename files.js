@@ -3,6 +3,7 @@
 
   class FileExtension {
     constructor() {
+      // Store metadata of the files opened
       this.openedFiles = [];
     }
 
@@ -25,6 +26,16 @@
           },
           '---',
           {
+            opcode: 'hasFiles',
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: 'files uploaded?'
+          },
+          {
+            opcode: 'fileCount',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'number of files opened'
+          },
+          {
             opcode: 'getFileAttribute',
             blockType: Scratch.BlockType.REPORTER,
             text: '[ATTR] of file [INDEX] opened',
@@ -32,11 +43,6 @@
               ATTR: { type: Scratch.ArgumentType.STRING, menu: 'fileAttributes' },
               INDEX: { type: Scratch.ArgumentType.NUMBER, defaultValue: 1 }
             }
-          },
-          {
-            opcode: 'fileCount',
-            blockType: Scratch.BlockType.REPORTER,
-            text: 'number of files opened'
           },
           '---',
           {
@@ -65,6 +71,11 @@
       };
     }
 
+    // Returns true if the user has uploaded at least one file
+    hasFiles() {
+      return this.openedFiles.length > 0;
+    }
+
     loadFile(args) {
       return new Promise((resolve) => {
         const input = document.createElement('input');
@@ -74,7 +85,7 @@
 
         input.onchange = async () => {
           const files = Array.from(input.files);
-          this.openedFiles = [];
+          this.openedFiles = []; // Reset storage on new upload
 
           for (const file of files) {
             const content = await this._readFileAs(file, args.TYPE);
@@ -132,10 +143,8 @@
       const element = document.createElement('a');
       
       if (type === 'Data URI') {
-        // Assume content is already a valid Data URI
         element.setAttribute('href', content);
       } else {
-        // Create a blob for plain text
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
       }
 
