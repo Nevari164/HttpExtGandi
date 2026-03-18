@@ -5,8 +5,9 @@
     const allowedDomains = [
         "jsonplaceholder.typicode.com",
         "api.example.com",
-        "cdn.jsdelivr.net",
-        "users.roblox.com"
+        "jsdelivr.net",
+        "users.roblox.com",
+        "roblox.com"
     ];
 
     const MAX_BODY_SIZE = 10000; // chars
