@@ -1,122 +1,149 @@
 (function (Scratch) {
   'use strict';
 
-  class FilesExtension {
+  class FileExtension {
+    constructor() {
+      // Store metadata of the last set of files opened
+      this.openedFiles = [];
+    }
+
     getInfo() {
       return {
-        id: 'files',
-        name: 'Files',
-        color1: '#4c97ff',
-        color2: '#3373cc',
+        id: 'fileExtGandiImproved',
+        name: 'Files Plus',
+        color1: '#4C97FF',
+        color2: '#3373CC',
         blocks: [
           {
-            opcode: 'showPicker',
-            blockType: Scratch.BlockType.REPORTER,
-            text: 'open a file',
-            arguments: {}
-          },
-          {
-            opcode: 'showPickerAsDataURL',
-            blockType: Scratch.BlockType.REPORTER,
-            text: 'open a file as data URL',
-            arguments: {}
-          },
-          {
-            opcode: 'download',
+            opcode: 'loadFile',
             blockType: Scratch.BlockType.COMMAND,
-            text: 'download [TEXT] as [NAME]',
+            text: 'load [EXT] s [MODE] file read as [TYPE]',
             arguments: {
-              TEXT: {
+              EXT: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'Hello World!'
+                defaultValue: '.txt, .cpp'
               },
-              NAME: {
+              MODE: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'file.txt'
+                menu: 'loadMode'
+              },
+              TYPE: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'readType'
               }
             }
           },
           {
-            opcode: 'downloadDataURL',
-            blockType: Scratch.BlockType.COMMAND,
-            text: 'download data URL [URL] as [NAME]',
+            opcode: 'getFileAttribute',
+            blockType: Scratch.BlockType.REPORTER,
+            text: '[ATTR] of file [INDEX] opened',
             arguments: {
-              URL: {
+              ATTR: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'data:text/plain;base64,SGVsbG8h'
+                menu: 'fileAttributes'
               },
-              NAME: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: 'file.txt'
+              INDEX: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 1
               }
             }
+          },
+          {
+            opcode: 'fileCount',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'number of files opened'
           }
-        ]
+        ],
+        menus: {
+          loadMode: {
+            acceptReporters: true,
+            items: ['Single', 'Multiple']
+          },
+          readType: {
+            acceptReporters: true,
+            items: ['UTF-8(text)', 'Data URI']
+          },
+          fileAttributes: {
+            acceptReporters: true,
+            items: ['name', 'content', 'file size in KB', 'file extension', 'Data URI']
+          }
+        }
       };
     }
 
-    _read(asDataURL) {
+    loadFile(args) {
       return new Promise((resolve) => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.style.display = 'none';
-        document.body.appendChild(input);
+        input.accept = args.EXT;
+        
+        // Handle Multiple/Single toggle
+        if (args.MODE === 'Multiple') {
+          input.multiple = true;
+        }
 
-        input.onchange = () => {
-          const file = input.files[0];
-          if (!file) {
-            resolve('');
-            return;
+        input.onchange = async () => {
+          const files = Array.from(input.files);
+          this.openedFiles = []; // Reset the list
+
+          for (const file of files) {
+            const content = await this._readFileAs(file, args.TYPE);
+            const dataURI = await this._readFileAs(file, 'Data URI');
+            
+            this.openedFiles.push({
+              name: file.name,
+              content: content,
+              size: (file.size / 1024).toFixed(2),
+              ext: file.name.split('.').pop(),
+              dataURI: dataURI
+            });
           }
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve(reader.result);
-            document.body.removeChild(input);
-          };
-          if (asDataURL) {
-            reader.readAsDataURL(file);
-          } else {
-            reader.readAsText(file);
-          }
+          resolve();
         };
 
-        input.oncancel = () => {
-          resolve('');
-          document.body.removeChild(input);
-        };
-
+        // If user cancels file picker
+        input.oncancel = () => resolve();
+        
         input.click();
       });
     }
 
-    showPicker() {
-      return this._read(false);
+    // Internal helper to read files
+    _readFileAs(file, type) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve("");
+
+        if (type === 'Data URI') {
+          reader.readAsDataURL(file);
+        } else {
+          reader.readAsText(file);
+        }
+      });
     }
 
-    showPickerAsDataURL() {
-      return this._read(true);
+    getFileAttribute(args) {
+      // Scratch uses 1-based indexing for users, JS uses 0-based
+      const index = Math.max(1, parseInt(args.INDEX)) - 1;
+      const file = this.openedFiles[index];
+
+      if (!file) return "";
+
+      switch (args.ATTR) {
+        case 'name': return file.name;
+        case 'content': return file.content;
+        case 'file size in KB': return file.size;
+        case 'file extension': return file.ext;
+        case 'Data URI': return file.dataURI;
+        default: return "";
+      }
     }
 
-    download(args) {
-      this._download(args.TEXT, args.NAME, 'text/plain');
-    }
-
-    downloadDataURL(args) {
-      this._download(args.URL, args.NAME);
-    }
-
-    _download(content, name, type) {
-      const blob = type ? new Blob([content], {type}) : null;
-      const url = type ? URL.createObjectURL(blob) : content;
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.click();
-      
-      if (type) URL.revokeObjectURL(url);
+    fileCount() {
+      return this.openedFiles.length;
     }
   }
 
-  Scratch.extensions.register(new FilesExtension());
+  Scratch.extensions.register(new FileExtension());
 })(Scratch);
