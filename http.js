@@ -38,6 +38,7 @@
 
         async httpGet(args) {
             const url = args.URL;
+            // For GET, we auto-detect content type from response
             return await safeRequest(url, 'GET');
         }
 
@@ -65,19 +66,22 @@
                 throw new Error("Body too large");
             }
 
-            const res = await fetch(url, {
+            const fetchOptions = {
                 method,
-                headers: { "Content-Type": contentType },
-                body: body
-            });
+                headers: {}
+            };
 
+            if (body) fetchOptions.body = body;
+            if (method === 'POST') fetchOptions.headers['Content-Type'] = contentType;
+
+            const res = await fetch(url, fetchOptions);
             const text = await res.text();
 
-            // parse JSON if content type is JSON
-            if (res.headers.get("content-type")?.includes("application/json")) {
+            const resType = res.headers.get("content-type") || "";
+
+            if (resType.includes("application/json")) {
                 try { return JSON.parse(text); } catch { return text; }
             } else {
-                // fallback: return plain text
                 return text;
             }
 
