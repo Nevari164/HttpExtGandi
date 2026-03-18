@@ -5,7 +5,8 @@
     const allowedDomains = [
         "jsonplaceholder.typicode.com",
         "api.example.com",
-        "https://cdn.jsdelivr.net"
+        "cdn.jsdelivr.net",
+        "roblox.com"
     ];
 
     const MAX_BODY_SIZE = 10000; // chars
@@ -53,7 +54,7 @@
     async function safeRequest(url, method, body = null) {
         try {
             const hostname = new URL(url).hostname;
-           // if (!allowedDomains.includes(hostname)) throw new Error("Blocked domain");
+            if (!allowedDomains.includes(hostname)) throw new Error("Blocked domain");
 
             if (body && JSON.stringify(body).length > MAX_BODY_SIZE) {
                 throw new Error("Body too large");
