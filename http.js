@@ -5,7 +5,7 @@
     const allowedDomains = [
         "jsonplaceholder.typicode.com",
         "api.example.com",
-        "https://cdn.jsdelivr.net".
+        "https://cdn.jsdelivr.net"
     ];
 
     const MAX_BODY_SIZE = 10000; // chars
