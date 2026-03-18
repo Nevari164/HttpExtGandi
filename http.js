@@ -3,7 +3,7 @@
 
     // Whitelist domains
     const allowedDomains = [
-      "turbowarp.org"
+      "extensions.turbowarp.org"
     ];
 
     const MAX_BODY_SIZE = 10000; // chars
@@ -19,7 +19,7 @@
                         blockType: Scratch.BlockType.REPORTER,
                         text: 'GET [URL]',
                         arguments: {
-                            URL: { type: Scratch.ArgumentType.STRING, defaultValue: 'https://jsonplaceholder.typicode.com/posts/1' }
+                            URL: { type: Scratch.ArgumentType.STRING, defaultValue: 'https://extensions.turbowarp.org/hello.txt' }
                         }
                     },
                     {
