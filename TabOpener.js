@@ -19,6 +19,12 @@
                 defaultValue: 'https://www.google.com'
               }
             }
+          },
+          {
+            opcode: 'isTabActive',
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: 'is this tab focused?',
+            arguments: {}
           }
         ]
       };
@@ -26,13 +32,16 @@
 
     openNewTab(args) {
       const url = args.URL;
-      // Basic security check to ensure it starts with a valid protocol
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      } else {
-        // If no protocol, try to prepend https://
-        window.open('https://' + url, '_blank', 'noopener,noreferrer');
-      }
+      const protocol = (url.startsWith('http://') || url.startsWith('https://')) ? '' : 'https://';
+      
+      // We use _blank to ensure it hits a new tab
+      window.open(protocol + url, '_blank', 'noopener,noreferrer');
+    }
+
+    isTabActive() {
+      // document.hidden is true if the tab is minimized or in the background
+      // document.hasFocus() is true if the window is the top-level focused element
+      return !document.hidden && document.hasFocus();
     }
   }
 
