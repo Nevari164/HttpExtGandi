@@ -1,94 +1,109 @@
 (function(Scratch) {
-    'use strict';
+  'use strict';
 
-    // Whitelist domains
-    const allowedDomains = [
-        "extensions.turbowarp.org"
-    ];
-
-    const MAX_BODY_SIZE = 10000; // chars
-
-    class HttpExtension {
-        getInfo() {
-            return {
-                id: 'sandboxhttp',
-                name: 'HTTP Requests',
-                blocks: [
-                    {
-                        opcode: 'httpGet',
-                        blockType: Scratch.BlockType.REPORTER,
-                        text: 'GET [URL]',
-                        arguments: {
-                            URL: { type: Scratch.ArgumentType.STRING, defaultValue: 'https://extensions.turbowarp.org/hello.txt' }
-                        }
-                    },
-                    {
-                        opcode: 'httpPost',
-                        blockType: Scratch.BlockType.REPORTER,
-                        text: 'POST [URL] with body [BODY] content type [TYPE]',
-                        arguments: {
-                            URL: { type: Scratch.ArgumentType.STRING, defaultValue: 'https://api.example.com/data' },
-                            BODY: { type: Scratch.ArgumentType.STRING, defaultValue: '{}' },
-                            TYPE: { type: Scratch.ArgumentType.STRING, defaultValue: 'application/json' }
-                        }
-                    }
-                ]
-            };
-        }
-
-        async httpGet(args) {
-            const url = args.URL;
-            // For GET, we auto-detect content type from response
-            return await safeRequest(url, 'GET');
-        }
-
-        async httpPost(args) {
-            const url = args.URL;
-            const contentType = args.TYPE || 'application/json';
-            let body = args.BODY;
-
-            // convert body if JSON type
-            if (contentType === 'application/json') {
-                try { body = JSON.stringify(JSON.parse(body)); } catch { body = null; }
-            }
-
-            return await safeRequest(url, 'POST', body, contentType);
-        }
+  class HttpPlus {
+    constructor() {
+      this.lastStatus = '';
+      this.lastResponse = '';
     }
 
-    async function safeRequest(url, method, body = null, contentType = 'application/json') {
-        try {
-            const hostname = new URL(url).hostname;
-            // Uncomment to enable domain whitelist
-            // if (!allowedDomains.includes(hostname)) throw new Error("Blocked domain");
-
-            if (body && body.length > MAX_BODY_SIZE) {
-                throw new Error("Body too large");
+    getInfo() {
+      return {
+        id: 'godslayerakpHttpPlus',
+        name: 'HTTP Plus (Fixed)',
+        color1: '#4C97FF',
+        blocks: [
+          {
+            opcode: 'request',
+            blockType: Scratch.BlockType.REPORTER,
+            text: '[METHOD] [URL] body [BODY] headers [HEADERS]',
+            arguments: {
+              METHOD: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'methods',
+                defaultValue: 'GET'
+              },
+              URL: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'https://api.zippopotam.us/us/90210'
+              },
+              BODY: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              },
+              HEADERS: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: '{"Content-Type": "text/plain"}'
+              }
             }
-
-            const fetchOptions = {
-                method,
-                headers: {}
-            };
-
-            if (body) fetchOptions.body = body;
-            if (method === 'POST') fetchOptions.headers['Content-Type'] = contentType;
-
-            const res = await fetch(url, fetchOptions);
-            const text = await res.text();
-
-            const resType = res.headers.get("content-type") || "";
-
-            if (resType.includes("application/json")) {
-                try { return JSON.parse(text); } catch { return text; }
-            } else {
-                return text;
-            }
-
-        } catch (err) {
-            return `Error: ${err.message}`;
+          },
+          '---',
+          {
+            opcode: 'getLastResponse',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'last response'
+          },
+          {
+            opcode: 'getLastStatus',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'last status code'
+          }
+        ],
+        menus: {
+          methods: {
+            acceptReporters: true,
+            items: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+          }
         }
+      };
     }
 
-    Scratch.extensions.register(new HttpExtension());
-})(window.Scratch);
+    async request(args) {
+      const method = args.METHOD.toUpperCase();
+      const url = args.URL;
+      let headers = {};
+      
+      // Parse headers safely
+      try {
+        if (args.HEADERS) {
+          headers = JSON.parse(args.HEADERS);
+        }
+      } catch (e) {
+        console.error("Invalid Headers JSON:", e);
+      }
+
+      const options = {
+        method: method,
+        headers: headers
+      };
+
+      // GET and HEAD requests cannot have a body
+      if (method !== 'GET' && method !== 'HEAD' && args.BODY) {
+        options.body = args.BODY;
+      }
+
+      try {
+        // FIXED: Using native fetch instead of Scratch.fetch
+        const response = await fetch(url, options);
+        this.lastStatus = response.status.toString();
+        const text = await response.text();
+        this.lastResponse = text;
+        return text;
+      } catch (err) {
+        this.lastStatus = 'Error';
+        this.lastResponse = err.message;
+        return '';
+      }
+    }
+
+    getLastResponse() {
+      return this.lastResponse;
+    }
+
+    getLastStatus() {
+      return this.lastStatus;
+    }
+  }
+
+  Scratch.extensions.register(new HttpPlus());
+})(Scratch);
