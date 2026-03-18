@@ -24,16 +24,10 @@ Each extension is built to work inside:
 ## 🌐 Included Example
 
 ### HTTP Extension
-👉 https://github.com/Nevari164/HttpExtGandi/main
-
 
 ** whats best about this??:**
 - It has HTTP Blocks Support from TurboWarp used for API fetching
 - it has a tab opener javacript useful for idk to be honest lol
-- saving/loading data
-
----
-
 
 
 ---
