@@ -2,6 +2,21 @@
   'use strict';
 
   class TabOpener {
+    constructor() {
+      // Listen for window focus/blur and visibility changes
+      const handleActivity = () => {
+        if (document.visibilityState === 'visible' && document.hasFocus()) {
+          Scratch.vm.runtime.startHats('tabopener_whenTabFocused');
+        } else {
+          Scratch.vm.runtime.startHats('tabopener_whenTabUnfocused');
+        }
+      };
+
+      window.addEventListener('focus', handleActivity);
+      window.addEventListener('blur', handleActivity);
+      document.addEventListener('visibilitychange', handleActivity);
+    }
+
     getInfo() {
       return {
         id: 'tabopener',
@@ -9,6 +24,19 @@
         color1: '#ff4c4c',
         color2: '#cc3333',
         blocks: [
+          {
+            opcode: 'whenTabFocused',
+            blockType: Scratch.BlockType.HAT,
+            text: 'when this tab is focused',
+            isEdgeActivated: false // Triggered manually by startHats
+          },
+          {
+            opcode: 'whenTabUnfocused',
+            blockType: Scratch.BlockType.HAT,
+            text: 'when this tab is unfocused',
+            isEdgeActivated: false
+          },
+          '---', // Separator line
           {
             opcode: 'openNewTab',
             blockType: Scratch.BlockType.COMMAND,
@@ -33,14 +61,10 @@
     openNewTab(args) {
       const url = args.URL;
       const protocol = (url.startsWith('http://') || url.startsWith('https://')) ? '' : 'https://';
-      
-      // We use _blank to ensure it hits a new tab
       window.open(protocol + url, '_blank', 'noopener,noreferrer');
     }
 
     isTabActive() {
-      // document.hidden is true if the tab is minimized or in the background
-      // document.hasFocus() is true if the window is the top-level focused element
       return !document.hidden && document.hasFocus();
     }
   }
