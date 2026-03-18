@@ -3,7 +3,7 @@
 
     // Whitelist domains
     const allowedDomains = [
-      "extensions.turbowarp.org"
+        "extensions.turbowarp.org"
     ];
 
     const MAX_BODY_SIZE = 10000; // chars
@@ -25,10 +25,11 @@
                     {
                         opcode: 'httpPost',
                         blockType: Scratch.BlockType.REPORTER,
-                        text: 'POST [URL] with body [BODY]',
+                        text: 'POST [URL] with body [BODY] content type [TYPE]',
                         arguments: {
                             URL: { type: Scratch.ArgumentType.STRING, defaultValue: 'https://api.example.com/data' },
-                            BODY: { type: Scratch.ArgumentType.STRING, defaultValue: '{}' }
+                            BODY: { type: Scratch.ArgumentType.STRING, defaultValue: '{}' },
+                            TYPE: { type: Scratch.ArgumentType.STRING, defaultValue: 'application/json' }
                         }
                     }
                 ]
@@ -42,29 +43,44 @@
 
         async httpPost(args) {
             const url = args.URL;
-            let body;
-            try { body = JSON.parse(args.BODY); } catch { body = null; }
-            return await safeRequest(url, 'POST', body);
+            const contentType = args.TYPE || 'application/json';
+            let body = args.BODY;
+
+            // convert body if JSON type
+            if (contentType === 'application/json') {
+                try { body = JSON.stringify(JSON.parse(body)); } catch { body = null; }
+            }
+
+            return await safeRequest(url, 'POST', body, contentType);
         }
     }
 
-    async function safeRequest(url, method, body = null) {
+    async function safeRequest(url, method, body = null, contentType = 'application/json') {
         try {
             const hostname = new URL(url).hostname;
-         //   if (!allowedDomains.includes(hostname)) throw new Error("Blocked domain");
+            // Uncomment to enable domain whitelist
+            // if (!allowedDomains.includes(hostname)) throw new Error("Blocked domain");
 
-            if (body && JSON.stringify(body).length > MAX_BODY_SIZE) {
+            if (body && body.length > MAX_BODY_SIZE) {
                 throw new Error("Body too large");
             }
 
             const res = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
-                body: body ? JSON.stringify(body) : null
+                headers: { "Content-Type": contentType },
+                body: body
             });
 
             const text = await res.text();
-            try { return JSON.parse(text); } catch { return text; }
+
+            // parse JSON if content type is JSON
+            if (res.headers.get("content-type")?.includes("application/json")) {
+                try { return JSON.parse(text); } catch { return text; }
+            } else {
+                // fallback: return plain text
+                return text;
+            }
+
         } catch (err) {
             return `Error: ${err.message}`;
         }
