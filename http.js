@@ -6,7 +6,7 @@
         "jsonplaceholder.typicode.com",
         "api.example.com",
         "cdn.jsdelivr.net",
-        "roblox.com"
+        "users.roblox.com"
     ];
 
     const MAX_BODY_SIZE = 10000; // chars
