@@ -3,7 +3,6 @@
 
   class FileExtension {
     constructor() {
-      // Store metadata of the files opened
       this.openedFiles = [];
     }
 
@@ -23,6 +22,11 @@
               MODE: { type: Scratch.ArgumentType.STRING, menu: 'loadMode' },
               TYPE: { type: Scratch.ArgumentType.STRING, menu: 'readType' }
             }
+          },
+          {
+            opcode: 'clearFiles',
+            blockType: Scratch.BlockType.COMMAND,
+            text: 'clear opened files'
           },
           '---',
           {
@@ -71,7 +75,11 @@
       };
     }
 
-    // Returns true if the user has uploaded at least one file
+    // New block to manually reset the state
+    clearFiles() {
+      this.openedFiles = [];
+    }
+
     hasFiles() {
       return this.openedFiles.length > 0;
     }
@@ -85,22 +93,27 @@
 
         input.onchange = async () => {
           const files = Array.from(input.files);
-          this.openedFiles = []; // Reset storage on new upload
-
-          for (const file of files) {
-            const content = await this._readFileAs(file, args.TYPE);
-            const dataURI = await this._readFileAs(file, 'Data URI');
-            
-            this.openedFiles.push({
-              name: file.name,
-              content: content,
-              size: (file.size / 1024).toFixed(2),
-              ext: file.name.split('.').pop() || '',
-              dataURI: dataURI
-            });
+          
+          // Only clear and update if the user actually picked files
+          if (files.length > 0) {
+            this.openedFiles = [];
+            for (const file of files) {
+              const content = await this._readFileAs(file, args.TYPE);
+              const dataURI = await this._readFileAs(file, 'Data URI');
+              
+              this.openedFiles.push({
+                name: file.name,
+                content: content,
+                size: (file.size / 1024).toFixed(2),
+                ext: file.name.split('.').pop() || '',
+                dataURI: dataURI
+              });
+            }
           }
           resolve();
         };
+        
+        // If they click "Cancel" in the file picker, it won't clear the previous files
         input.oncancel = () => resolve();
         input.click();
       });
@@ -141,13 +154,11 @@
       const type = args.DL_TYPE;
 
       const element = document.createElement('a');
-      
       if (type === 'Data URI') {
         element.setAttribute('href', content);
       } else {
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
       }
-
       element.setAttribute('download', filename);
       element.style.display = 'none';
       document.body.appendChild(element);
