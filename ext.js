@@ -1,63 +1,47 @@
-(function (global) {
-    const allowedDomains = ["api.example.com"];
+(function () {
+    if (!window.GandiIDE) return console.error("Gandi IDE not found");
 
-    async function secureFetch({ url, method, body }) {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
+    const allowedDomains = ["jsonplaceholder.typicode.com", "api.example.com"];
 
-        try {
-            const res = await fetch(url, {
-                method,
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: body ? JSON.stringify(body) : null,
-                signal: controller.signal
-            });
+    // create HTTP request block
+    window.GandiIDE.createBlock({
+        name: "HTTP Request",
+        category: "Network",
+        inputs: [
+            { name: "URL", type: "string" },
+            { name: "Method", type: "dropdown", options: ["GET", "POST"] },
+            { name: "Body", type: "string", optional: true }
+        ],
+        execute: async function (inputs) {
+            try {
+                const url = inputs.URL;
+                const method = inputs.Method;
+                const body = inputs.Body ? JSON.parse(inputs.Body) : null;
 
-            clearTimeout(timeout);
+                const hostname = new URL(url).hostname;
+                if (!allowedDomains.includes(hostname)) {
+                    throw new Error("Blocked domain: " + hostname);
+                }
 
-            return {
-                status: res.status,
-                data: await res.json()
-            };
-        } catch (err) {
-            return {
-                status: 500,
-                error: err.message
-            };
+                const response = await fetch(url, {
+                    method,
+                    headers: { "Content-Type": "application/json" },
+                    body: body ? JSON.stringify(body) : null
+                });
+
+                const text = await response.text();
+                let data;
+                try { data = JSON.parse(text); } catch { data = text; }
+
+                console.log("HTTP Response:", data);
+                return data;
+            } catch (err) {
+                console.error("HTTP Block Error:", err);
+                return { error: err.message };
+            }
         }
-    }
+    });
 
-    const SafeHTTP = {
-        async request(url, options = {}) {
-            const parsed = new URL(url);
+    console.log("HTTP Request code block loaded");
 
-            // 🔒 domain lock
-            if (!allowedDomains.includes(parsed.hostname)) {
-                throw new Error("Blocked domain");
-            }
-
-            // 🔒 method lock
-            const method = (options.method || "GET").toUpperCase();
-            if (!["GET", "POST"].includes(method)) {
-                throw new Error("Invalid method");
-            }
-
-            // 🔒 payload limit
-            if (options.body && JSON.stringify(options.body).length > 5000) {
-                throw new Error("Payload too large");
-            }
-
-            return await secureFetch({
-                url,
-                method,
-                body: options.body
-            });
-        }
-    };
-
-    // expose to global
-    global.SafeHTTP = SafeHTTP;
-
-})(window);
+})();
