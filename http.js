@@ -3,11 +3,7 @@
 
     // Whitelist domains
     const allowedDomains = [
-        "jsonplaceholder.typicode.com",
-        "api.example.com",
-        "jsdelivr.net",
-        "users.roblox.com",
-        "roblox.com"
+      "turbowarp.org"
     ];
 
     const MAX_BODY_SIZE = 10000; // chars
