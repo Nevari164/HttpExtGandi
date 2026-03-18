@@ -1,12 +1,12 @@
-# 🧩 Random Gandi IDE / CCW Extensions
+#  Random Gandi IDE / CCW Extensions
 
 A collection of **random custom extensions** made for **Gandi IDE / ccw.site**.
 
-No theme, no limits — just useful, weird, and fun ideas.
+No theme, no limits, just useful, weird, and fun ideas.
 
 ---
 
-## 📦 What This Repo Is
+##  What This Repo Is
 
 This repo contains custom extensions that:
 
@@ -21,7 +21,7 @@ Each extension is built to work inside:
 
 ---
 
-## 🌐 Included Example
+##  Included Example
 
 ### HTTP Extension
 
@@ -33,7 +33,7 @@ Each extension is built to work inside:
 ---
 
 
-### 🧪 Experimental Stuff
+###  Experimental Stuff
 - unfinished ideas
 - test features
 - weird concepts that might actually work
