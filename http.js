@@ -7,7 +7,7 @@
         "api.example.com"
     ];
 
-    const MAX_BODY_SIZE = 5000; // chars
+    const MAX_BODY_SIZE = 10000; // chars
 
     class HttpExtension {
         getInfo() {
@@ -52,7 +52,7 @@
     async function safeRequest(url, method, body = null) {
         try {
             const hostname = new URL(url).hostname;
-            if (!allowedDomains.includes(hostname)) throw new Error("Blocked domain");
+           // if (!allowedDomains.includes(hostname)) throw new Error("Blocked domain");
 
             if (body && JSON.stringify(body).length > MAX_BODY_SIZE) {
                 throw new Error("Body too large");
